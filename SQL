@@ -1,0 +1,115 @@
+ -- Creating and selecting the database
+ 
+CREATE DATABASE IF NOT EXISTS ecb_tltro_analysis;
+USE ecb_tltro_analysis;
+
+
+-- Creating the "countries" table for storing country information 
+
+CREATE TABLE countries (
+    country_code VARCHAR(5) PRIMARY KEY,
+    country_name VARCHAR(50) NOT NULL,
+    is_euro_area TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- Creating the main "loan_stocks" table for storing quarterly loan data
+
+CREATE TABLE loan_stocks (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    country_code VARCHAR(5) NOT NULL,
+    date DATE NOT NULL,
+    time_period VARCHAR(10),
+    loan_value DECIMAL(15,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (country_code) REFERENCES countries(country_code),
+    INDEX idx_country_date (country_code, date),
+    INDEX idx_time_period (time_period)
+);
+
+
+--  Creating the aggregated "countries_eurozone" table for Eurozone-wide analysis
+
+CREATE TABLE countries_eurozone (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    country_code VARCHAR(2) DEFAULT 'EZ' COMMENT 'Euro Zone',
+    time_period VARCHAR(6) NOT NULL,
+    quarter_date DATE NOT NULL,
+    total_loan DECIMAL(18,2) NOT NULL,
+    prev_quarter_loan DECIMAL(18,2),
+    growth_rate_pct DECIMAL(5,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY idx_unique_ez_period (country_code, time_period),
+    INDEX idx_quarter_date (quarter_date)
+);
+
+
+-- Checking data integrity by checking for duplicate entries
+-- where multiple loan stock values exist for the same country on the same date
+
+SELECT 
+    country_code,
+    date,
+    COUNT(*) as record_count
+FROM loan_stocks
+GROUP BY country_code, date
+HAVING COUNT(*) > 1
+ORDER BY record_count DESC;
+
+
+-- Grouping the total loan stocks data by country and quarter
+
+SELECT 
+    country_code,
+    time_period,
+    SUM(loan_value) as quarterly_total,
+    COUNT(*) as data_point_count
+FROM loan_stocks
+WHERE country_code IN ('DE', 'FR', 'IT', 'ES', 'NL')
+GROUP BY country_code, time_period
+ORDER BY country_code, time_period;
+
+
+-- Extracting the total loan stock for the entire Eurozone per quarter
+
+SELECT 
+    time_period,
+    quarter_date,
+    total_loan
+FROM countries_eurozone
+ORDER BY quarter_date;
+
+
+-- Calculating quarter-over-quarter growth percentages for Eurozone by using window functions
+
+SELECT 
+    time_period,
+    quarter_date,
+    total_loan,
+    LAG(total_loan) OVER (ORDER BY quarter_date) as previous_quarter_loan,
+    ROUND(((total_loan / LAG(total_loan) OVER (ORDER BY quarter_date)) - 1) * 100, 2) as growth_rate_pct
+FROM countries_eurozone
+ORDER BY quarter_date;
+
+
+-- Calculating country-level growth rates by using Common Table Expression (CTE)
+
+WITH quarterly_data AS (
+    SELECT 
+        country_code,
+        time_period,
+        SUM(loan_value) as quarterly_total,
+        LAG(SUM(loan_value)) OVER (PARTITION BY country_code ORDER BY MIN(date)) as prev_quarter_total
+    FROM loan_stocks
+    GROUP BY country_code, time_period
+)
+SELECT 
+    country_code,
+    time_period,
+    quarterly_total,
+    prev_quarter_total,
+    ROUND(((quarterly_total - prev_quarter_total) / prev_quarter_total) * 100, 2) as growth_rate
+FROM quarterly_data
+WHERE prev_quarter_total IS NOT NULL
+ORDER BY country_code, time_period;
