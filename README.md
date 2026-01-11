@@ -29,3 +29,26 @@ Key Findings
 - The Netherlands did not experience any noticeable change.
 - TLTRO-III (2019-2022) showed the strongest correlation with credit growth across
 all countries.
+
+Project Structure
+
+tltro-impact-analysis/  
+├──- sql/ # SQL queries for analysis  
+├──- data/ # Sample dataset  
+├──- tableau/ # Tableau visualisations  
+├──- report/ # Analysis report in PDF format  
+└──- README.md # Project documentation  
+
+1. Review SQL queries in the /sql folder for analysis methodology
+2. Open Tableau files in /tableau to explore tableau visualisations
+3. Read the full analysis in /Project
+
+License
+
+This project is for portfolio and educational purposes. Data from the European Central Bank (ECB) Statistical Data Warehouse is used in accordance with transparency exercise guidelines.
+
+Author
+
+- Mert Cevher
+- Master's Student in Public Economics, Law and Politics
+- www.linkedin.com/in/mertcevher | mert.cevher@stud.leuphana.de
