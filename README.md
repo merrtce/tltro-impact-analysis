@@ -1,5 +1,11 @@
-# tltro-impact-analysis
 Analysis of TLTRO Impacts on Loan Stocks of Eurozone's Five Largest Economies
+
+Research Question: How significantly did ECB’s TLTRO program effect the five biggest Eurozone economies’ loan stocks?  
+Data Source: European Central Bank (ECB), Statistical Data Warehouse  
+Scope: Germany, France, Italy, Spain, the Netherlands  
+Time Period: 1997-2025 (TLTRO I-II-III: 2014-2022)  
+Main Metrics: Loan Stock Volumes and Growth Rates  
+Tools: Microsoft Excel, SQL (MySQL), Tableau  
 
 Project Objective
 
